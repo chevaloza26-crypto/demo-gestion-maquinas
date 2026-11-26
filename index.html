@@ -599,6 +599,18 @@ tr.sel td:first-child,.row.sel{box-shadow:inset 3px 0 0 var(--gold)}
 .phone{height:min(812px,calc(100vh - 80px))}.tablet{height:min(720px,calc(100vh - 80px))}
 @media (max-width:1100px){.drawer{width:calc(100vw - 80px)}.uinfo{display:none}}
 @media (max-width:860px){.side{top:0}.drawer{width:100vw;top:var(--demo)}.demobar .dm-l[data-proj],.demobar .dm-t{display:none}}
+
+/* v3.1: mantenimiento preventivo */
+tr.grp-r td{background:#F7F8FA;padding:8px 16px;border-bottom:1px solid var(--line)}
+.side a .lock{border-color:#33414F;color:var(--nav-dim);border-radius:5px}
+.pvrow{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line2);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:#fff}
+.pvrow.obs{border-color:#EFC98F;background:#FFF8EC}
+.pvn{width:26px;height:26px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:12.5px;flex:none;font-weight:700;color:var(--ink3)}
+.pvn.on{background:var(--green);color:#fff}
+.pvt{flex:1;font-size:15px}.pvt small{display:block;font-size:12.5px;color:var(--ochre-d)}
+.pvb{min-height:40px;border-radius:9px;border:1.5px solid var(--line2);background:#fff;padding:0 14px;font-size:14px}
+.pvb.on{background:var(--green);border-color:var(--green);color:#fff}
+.pvb.o.on{background:var(--ochre);border-color:var(--ochre);color:#fff}
 </style>
 </head>
 <body>
@@ -608,6 +620,7 @@ tr.sel td:first-child,.row.sel{box-shadow:inset 3px 0 0 var(--gold)}
   <button class="dm-l" data-proj="mejora">Mejora de procesos</button>
   <button class="dm-l" data-proj="hoja">Lo que pidieron</button>
   <span class="dm-sp"></span>
+  <button class="dm-l" id="dreset" title="Vuelve la demo al estado inicial">↺ Reiniciar</button>
   <label for="prof">Ver como</label><select id="prof"></select>
   <button class="dm-g" id="gbtn">▶ Guía de la demo</button>
 </div>
@@ -866,6 +879,37 @@ function verDetail(m){if(!m.ver)return '';const w=PN(m.ver.who),h=m.ver.how;
   if(h.startsWith('en '))return 'Escaneada por '+w+' '+h;
   return 'Escaneada por '+w}
 
+/* =========================================================
+   MANTENIMIENTO PREVENTIVO (etapa 3 de la implementación)
+   Planes y frecuencias de ejemplo, a validar con el Taller.
+   ========================================================= */
+const PLAN={
+  LHB:{clase:'A',serv:'Service general',cada:'Cada 250 h o 6 meses',h:250,pts:['Baterías: agua, bornes y cables','Labio de secado','Cepillos o pads y faldones','Filtro del tanque y mangueras','Frenos, dirección y tracción','Prueba de funcionamiento'],diario:['Enchufar la batería al terminar y no cortar la carga','Vaciar y enjuagar los tanques','Revisar cepillos y labio de secado','Avisar ruidos, pérdidas o golpes']},
+  BHB:{clase:'A',serv:'Service general',cada:'Cada 200 h o 6 meses',h:200,pts:['Baterías o motor','Cepillo central y laterales','Filtro de polvo','Correas y transmisión','Frenos y dirección','Prueba de funcionamiento'],diario:['Enchufar la batería al terminar','Vaciar la tolva','Sacudir el filtro de polvo','Avisar ruidos o golpes']},
+  AUT:{clase:'A',serv:'Service',cada:'Cada 250 h o 6 meses',h:250,pts:['Horquillas, cadenas y mástil','Frenos y dirección','Batería o motor','Luces, bocina y alarma de retroceso','Neumáticos','Prueba de funcionamiento'],diario:['Control antes de usar, al inicio del turno','Cargar o enchufar al terminar','Avisar cualquier falla antes de operar']},
+  MTR:{clase:'A',serv:'Service de temporada',cada:'Cada 100 h o 12 meses',h:100,pts:['Aceite y filtro de motor','Filtro de aire y bujía','Cuchillas y correas','Neumáticos y dirección','Prueba de funcionamiento'],diario:['Limpiar el plato de corte','Revisar el nivel de aceite','Avisar vibraciones o pérdidas']},
+  LHC:{clase:'B',serv:'Service anual',cada:'Cada 12 meses',pts:['Batería y cargador','Labio de secado','Cepillo o pad','Mangueras y tanque','Prueba de funcionamiento'],diario:['Enchufar la batería al terminar','Vaciar y enjuagar los tanques','Revisar cepillo y labio de secado']},
+  BHC:{clase:'B',serv:'Service anual',cada:'Cada 12 meses',pts:['Batería y cargador','Cepillos','Filtro de polvo','Prueba de funcionamiento'],diario:['Enchufar la batería al terminar','Vaciar la tolva']},
+  HID:{clase:'B',serv:'Service anual',cada:'Cada 12 meses',pts:['Aceite de la bomba','Filtro de agua y picos','Manguera, lanza y conexiones','Prueba de presión'],diario:['Purgar el agua al terminar','Revisar manguera y pico']},
+};
+const CLASE={A:'Crítica: cuidado diario, control mensual y service',B:'Cuidado diario, control mensual y service anual',C:'Sin service programado: se reemplaza'};
+ML().forEach((m,i)=>{if(PLAN[m.type]&&PLAN[m.type].h){m.horas=900+((i*137)%1400)}});
+const PV=[];let PVN=200;
+function newPV(code,due,o){const m=M[code];if(!m||!PLAN[m.type])return null;const p=Object.assign({id:'P'+(++PVN),code,task:PLAN[m.type].serv,cada:PLAN[m.type].cada,due,step:0,chk:{}},o||{});PV.push(p);return p}
+newPV('LHB-0007',9,{step:1,faltan:18,visita:'hoy'});
+newPV('LHB-0012',9,{step:1,visita:'hoy'});
+newPV('LHB-0011',20,{});
+newPV('LHB-0001',14,{});
+newPV('LHB-0006',27,{});
+newPV('BHB-0005',21,{sinHoras:true});
+newPV('BHB-0002',-4,{});
+newPV('MTR-0002',30,{});
+newPV('LHC-0003',45,{});
+newPV('AUT-0006',6,{step:0,ext:'Taller externo de la zona'});
+KIND.preventivo={n:'Preventivo',steps:['Programado','Asignado','En ejecución','Hecho']};
+function pvState(p){const m=M[p.code];if(p.step===3)return {t:'ok',l:'Hecho'};if(m.cond==='fs')return {t:'neu',l:'En pausa · por rotura'};if(m.loc.k==='transito')return {t:'neu',l:'En pausa · en camino'};
+  if(p.due<0)return {t:'bad',l:'Vencido hace '+(-p.due)+' días'};if(p.faltan!=null)return {t:'warn',l:'Faltan '+p.faltan+' h'};return {t:p.due<=15?'warn':'ok',l:'En '+p.due+' días'}}
+
 function dmMask(el){if(/^\d{2}\/\d{2}\/\d{4}$/.test(el.value))return;let d=el.value.replace(/\D/g,'').slice(0,8);el.value=d.length>4?d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4):d.length>2?d.slice(0,2)+'/'+d.slice(2):d}
 function validDM(s){const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);if(!m)return false;const d=new Date(+m[3],+m[2]-1,+m[1]);return d.getDate()==+m[1]&&d.getMonth()==+m[2]-1}
 /* =========================================================
@@ -902,10 +946,11 @@ const NAV=[
   {g:'Operación'},
   {id:'maquinas',n:'Máquinas',ic:'mach'},
   {id:'servicios',n:'Servicios',ic:'svc'},
-  {id:'roturas',n:'Roturas y taller',ic:'tool'},
   {id:'censo',n:'Censo',ic:'scan'},
-  {id:'vencimientos',n:'Vencimientos',ic:'cal'},
   {id:'comprobantes',n:'Comprobantes',ic:'doc'},
+  {g:'Mantenimiento'},
+  {id:'roturas',n:'Roturas y taller',ic:'tool'},
+  {id:'preventivo',n:'Preventivo',ic:'cal',lock:true,stage:'Etapa 3'},
   {g:'Abastecimiento'},
   {id:'abastecimiento',n:'Pedidos de insumos',ic:'cart',stage:'Etapa 2'},
   {id:'config',n:'Configuración',ic:'gear',bottom:true},
@@ -924,7 +969,7 @@ function renderShell(){
   $('#unit').classList.toggle('hidden',!web);
   $('#app').style.gridTemplateColumns=web?'':'1fr';
   const pc=myPend().length;
-  const cur=baseRoute().split('/')[0];const sec={servicio:'servicios',cierre:'servicios',articulo:'abastecimiento'}[cur]||cur;
+  const cur=baseRoute().split('/')[0];const sec={servicio:'servicios',cierre:'servicios',articulo:'abastecimiento',vencimientos:'preventivo'}[cur]||cur;
   const pn=PROF[S.profile].n.split(' · ');$('#uname').textContent=pn[1]||pn[0];$('#urole').textContent=pn[1]?pn[0]:'Linser';
   document.querySelector('.bar').classList.toggle('hidden',!web);
   $('#nav').innerHTML=NAV.map(it=>it.g?`<div class="grp">${it.g}</div>`:`<a href="#${it.id}" class="${sec===it.id?'on':''}${it.bottom?' bottom':''}">${ico(it.ic)}${it.n}${it.count&&pc?`<span class="ct">${pc}</span>`:''}${it.lock?`<span class="lock">${it.stage}</span>`:''}</a>`).join('');
@@ -939,7 +984,7 @@ function render(){
   if(S.profile==='deposito') return renderTablet(v);
   const det=isDet(S.route);if(!det)S.base=S.route;
   const [r,arg]=baseRoute().split('/');
-  const F={mejora:vMejora,centro:S.profile==='jefe'?vCentroJefe:S.profile==='supgen'?vCentroSupGen:S.profile==='compras'?vCentroCompras:vCentro,pendientes:vPend,maquinas:vMaquinas,maquina:vMaquina,servicios:vServicios,servicio:vServicio,cierre:vCierre,roturas:vRoturas,censo:vCenso,vencimientos:vVenc,comprobantes:vComp,abastecimiento:vAbast,articulo:vArticulo,g:vGestion,personas:vLater,analisis:vLater,hoja:vHoja,config:vConfig};
+  const F={mejora:vMejora,centro:S.profile==='jefe'?vCentroJefe:S.profile==='supgen'?vCentroSupGen:S.profile==='compras'?vCentroCompras:vCentro,pendientes:vPend,maquinas:vMaquinas,maquina:vMaquina,servicios:vServicios,servicio:vServicio,cierre:vCierre,roturas:vRoturas,censo:vCenso,vencimientos:vPrev,preventivo:vPrev,comprobantes:vComp,abastecimiento:vAbast,articulo:vArticulo,g:vGestion,personas:vLater,analisis:vLater,hoja:vHoja,config:vConfig};
   (F[r]||vCentro)(v,arg);
   wire(v);
   renderDrawer();
@@ -1260,6 +1305,7 @@ function vMaquina(v,code){
    <div class="grid g12">
     <div style="display:grid;gap:14px;align-content:start">
      <div class="card"><div class="ch"><h3>Gestiones abiertas</h3></div>${open.length?open.map(g=>pendRow(g,false)).join(''):'<div class="empty">Ninguna.</div>'}</div>
+     ${prevBlock(m)}
      <div class="card wm"><div class="ch"><h3>Roturas</h3><span class="s">Últimos 12 meses (ejemplo)</span></div><div class="cb">${m.rot.n?`<div style="display:flex;gap:18px"><div><div style="font-size:24px;font-weight:600">${m.rot.n}</div><div class="small muted">roturas</div></div><div><div style="font-size:24px;font-weight:600">${m.rot.dias}</div><div class="small muted">días fuera de servicio</div></div><div><div style="font-size:24px;font-weight:600">${fmtMoney(m.rot.costo)}</div><div class="small muted">costo acumulado</div></div></div>${m.rot.n>=3?'<div class="alertbox warn" style="margin-top:10px">Candidata a renovar: 3 o más roturas en 12 meses.</div>':''}`:'<span class="muted">Sin roturas registradas.</span>'}</div></div>
      ${m.venc.length?`<div class="card wm"><div class="ch"><h3>Vencimientos</h3></div>${m.venc.map(x=>`<div class="row"><div class="t">${x.label}</div><div class="r"><span class="chip ${x.d<0?'bad':x.d<15?'warn':'ok'}">${x.d<0?'Vencida hace '+(-x.d)+' días':'En '+x.d+' días'}</span></div></div>`).join('')}</div>`:''}
      <div class="card"><div class="ch"><h3>Comprobantes</h3></div>${comps.length?comps.map(c=>`<div class="row click" data-comp="${c.id}"><span class="tag neu">${c.id}</span><div><div class="t">${c.type}</div><div class="m">${L[c.svc].c} · ${fmtDL(c.d)} · recibió ${PN(c.recibio)}</div></div></div>`).join(''):'<div class="empty">Sin comprobantes.</div>'}</div>
@@ -1335,6 +1381,41 @@ function vCenso(v){
    <div class="grid g3" style="margin-bottom:14px"><div class="card kpi wm"><div class="l">% verificado</div><div class="v">${kpis().pct}%</div><div class="d">Meta 90%</div></div><div class="card kpi"><div class="l">Registros del listado a regularizar</div><div class="v">${regs} de 50</div><div class="d">${50-regs} identificados en el censo</div></div><div class="card kpi"><div class="l">Diferencias abiertas</div><div class="v">${difs.filter(g=>!g.closed).length}</div><div class="d">Vistas en otro lado, no vistas, altas nuevas</div></div></div>
    <div class="grid g2"><div class="card wm"><div class="ch"><h3>Avance por supervisor</h3></div>${sups.map(s=>{const p=supPct(s);return `<div class="row"><div style="width:150px" class="t">${PN(s)}</div><div style="flex:1"><div class="meter"><i style="width:${p}%;background:${p<70?'var(--ochre)':'var(--green)'}"></i><em style="left:90%"></em></div></div><span class="mono" style="width:50px;text-align:right">${p}%</span></div>`}).join('')}</div>
    <div class="card"><div class="ch"><h3>Diferencias</h3></div>${difs.length?difs.map(g=>`<div class="row click" data-g="${g.id}">${priChip(g)}<div><div class="t">${gTitle(g)}</div><div class="m">${g.closed?g.closedNote:gMeta(g)}</div></div></div>`).join(''):'<div class="empty">Sin diferencias abiertas. Aparecen cuando un supervisor cierra un censo.</div>'}</div></div></div>`}
+function vPrev(v){
+  const open=PV.filter(p=>p.step<3);const venc=ML().filter(m=>m.venc.length);
+  const nv=open.filter(p=>p.due<0&&M[p.code].cond!=='fs').length+venc.reduce((a,m)=>a+m.venc.filter(x=>x.d<0&&!x.prog).length,0);
+  const n30=open.filter(p=>p.due>=0&&p.due<=30).length+venc.reduce((a,m)=>a+m.venc.filter(x=>x.d>=0&&x.d<=30).length,0);
+  const done=PV.filter(p=>p.step===3).length;const tab=S.pvtab||'agenda';
+  // filas de la agenda: service (PV) + lo que vence por norma (m.venc), agrupadas por lugar
+  const rows=[];open.forEach(p=>rows.push({k:'pv',p,m:M[p.code],ord:p.due}));
+  venc.forEach(m=>m.venc.forEach((x,i)=>rows.push({k:'venc',x,i,m,ord:x.d})));
+  const groups={};rows.forEach(r=>{const g=whereShort(r.m);(groups[g]=groups[g]||[]).push(r)});
+  const gk=Object.keys(groups).sort((a,b)=>Math.min(...groups[a].map(r=>r.ord))-Math.min(...groups[b].map(r=>r.ord)));
+  const stepTxt=p=>p.step===2?'<span class="dot" style="background:var(--ochre)"></span><b class="m5">En ejecución</b><div class="small muted">Diego Sosa</div>':p.step===1?`<span class="dot" style="background:var(--slate)"></span><b class="m5">Asignado</b><div class="small muted">${p.visita?'visita de '+p.visita:'al Taller'}</div>`:p.ext?`<span class="muted">${p.ext}</span>`:'<span class="muted">Programado</span>';
+  const agenda=`<div class="card"><div class="ch"><h3>Agenda</h3><span class="s">Agrupada por lugar, para aprovechar la visita del Taller</span></div>
+   <table><thead><tr><th>Máquina</th><th>Qué hay que hacer</th><th>Cuándo</th><th>Paso</th><th></th></tr></thead><tbody>
+   ${gk.map(g=>`<tr class="grp-r"><td colspan="5"><b>${esc(g)}</b> <span class="muted small" style="margin-left:8px">${groups[g].length} trabajo${groups[g].length>1?'s':''}</span></td></tr>`+groups[g].sort((a,b)=>a.ord-b.ord).map(r=>{
+     if(r.k==='pv'){const p=r.p,st=pvState(p);return `<tr class="click" data-m="${p.code}"><td><span class="tag neu">${p.code}</span> <span style="margin-left:6px">${TN(r.m.type)}</span></td><td>${p.task}<div class="small muted">${p.cada}</div></td><td><span class="chip ${st.t}">${st.l}</span>${p.sinHoras?'<div class="small" style="color:var(--ochre-d)">Sin lectura de horas: vale la fecha</div>':''}</td><td>${stepTxt(p)}</td><td>${p.step===0&&!p.ext&&st.t!=='neu'?`<button class="btn" data-pvas="${p.id}">Asignar al Taller</button>`:''}</td></tr>`}
+     const x=r.x;return `<tr class="click" data-m="${r.m.code}"><td><span class="tag neu">${r.m.code}</span> <span style="margin-left:6px">${TN(r.m.type)}</span></td><td>${x.label} <span class="chip info" style="margin-left:4px">Por norma</span><div class="small muted">Fecha fija · Seguridad e Higiene</div></td><td>${x.prog?'<span class="chip info">Programada '+x.prog+'</span>':`<span class="chip ${x.d<0?'bad':x.d<15?'warn':'ok'}">${x.d<0?'Vencida hace '+(-x.d)+' días':'En '+x.d+' días'}</span>`}</td><td><span class="muted">${x.prog?'Programado':'Sin programar'}</span></td><td>${x.d<15&&!x.prog?`<button class="btn" data-prog="${r.m.code}|${r.i}">Programar</button>`:''}</td></tr>`}).join('')).join('')}
+   </tbody></table></div>`;
+  const planes=`<div class="grid g2">${Object.keys(PLAN).map(t=>{const P=PLAN[t];const n=ML().filter(m=>m.type===t).length;return `<div class="card"><div class="ch"><h3>${TN(t)}</h3><span class="s">${n} máquinas · clase ${P.clase}</span><div class="r"><span class="chip ${P.clase==='A'?'warn':'neu'}">${P.clase==='A'?'Crítica':'Clase B'}</span></div></div>
+     <div class="row"><div><div class="t">Cuidado diario</div><div class="m">${P.diario.join(' · ')}</div></div><div class="r"><span class="tag neu">Cada uso</span></div></div>
+     <div class="row"><div><div class="t">Control del supervisor</div><div class="m">Cinco puntos al escanear la máquina${P.h?'; lee las horas de uso':''}</div></div><div class="r"><span class="tag neu">Mensual</span></div></div>
+     <div class="row"><div><div class="t">${P.serv}</div><div class="m">${P.pts.length} puntos · Taller o taller externo</div></div><div class="r"><span class="tag neu">${P.cada.replace('Cada ','')}</span></div></div></div>`}).join('')}
+     <div class="card"><div class="ch"><h3>Aspiradoras, lustradoras y desmalezadoras</h3><span class="s">clase C</span></div><div class="cb muted">Sin service programado: se reemplazan cuando fallan. Las desmalezadoras se revisan en lote, en invierno.</div></div>
+     <div class="card"><div class="ch"><h3>Reglas del plan</h3></div><ul class="ml"><li><b>Lo que ocurra primero.</b> Si no hay lectura de horas, vale la fecha.</li><li><b>Se cuenta desde la última vez que se hizo</b>; lo que vence por norma tiene fecha fija.</li><li><b>Una sola orden abierta</b> por máquina y tarea: no se acumulan.</li><li><b>Se pausa</b> si la máquina está fuera de servicio o en camino.</li><li><b>Si aparece una falla</b>, se abre una rotura vinculada.</li></ul></div></div>`;
+  v.innerHTML=`<div class="page"><div class="ph"><div><h1>Preventivo y vencimientos <span class="chip info">Etapa 3</span></h1><div class="sub">Lo que hay que hacerle a cada máquina antes de que se rompa, y lo que vence por norma. Planes y frecuencias de ejemplo.</div></div>
+    <div class="act"><div class="seg"><button class="${tab==='agenda'?'on':''}" data-pvt="agenda">Agenda</button><button class="${tab==='planes'?'on':''}" data-pvt="planes">Planes por tipo</button></div></div></div>
+   <div class="grid g4" style="margin-bottom:14px">
+    <div class="card kpi"><div class="l">Cumplimiento del plan</div><div class="v">${Math.round((9+done)/(11+done)*100)}%</div><div class="d">${9+done} de ${11+done} hechos a tiempo · últimos 90 días (ejemplo)</div></div>
+    <div class="card kpi"><div class="l">Vencidos hoy</div><div class="v" style="color:${nv?'var(--red-d)':'inherit'}">${nv}</div><div class="d">entre service y controles por norma</div></div>
+    <div class="card kpi"><div class="l">Próximos 30 días</div><div class="v">${n30}</div><div class="d">en ${gk.length} lugares</div></div>
+    <div class="card kpi"><div class="l">Preventivo y roturas</div><div class="v">${11+done} <span style="font-size:15px;font-weight:400;color:var(--ink3)">y 14</span></div><div class="d">preventivos y roturas · últimos 90 días (ejemplo)</div></div>
+   </div>
+   ${tab==='agenda'?agenda:planes}</div>`;
+  v.querySelectorAll('[data-pvt]').forEach(b=>b.onclick=()=>{S.pvtab=b.dataset.pvt;render()});
+  v.querySelectorAll('[data-pvas]').forEach(b=>b.onclick=e=>{e.stopPropagation();const p=PV.find(x=>x.id===b.dataset.pvas);p.step=1;render();toast('Asignado al Taller Carabobo. Diego Sosa ya lo ve en la tablet, en Preventivos.')});
+  wireProg(v)}
 function vVenc(v){const ms=ML().filter(m=>m.venc.length).sort((a,b)=>a.venc[0].d-b.venc[0].d);
   v.innerHTML=`<div class="page"><div class="ph"><div><h1>Vencimientos</h1><div class="sub">Autoelevadores primero: revisión periódica, service y habilitación del conductor (ejemplo).</div></div></div>
   <div class="card"><table><thead><tr><th>Máquina</th><th>Dónde está</th><th>Control</th><th>Estado</th><th></th></tr></thead><tbody>${ms.map(m=>m.venc.map((x,i)=>`<tr class="click" data-m="${m.code}"><td><span class="tag neu">${m.code}</span> ${TN(m.type)}</td><td>${esc(whereShort(m))}</td><td>${x.label}</td><td>${x.prog?'<span class="chip info">Programada '+x.prog+'</span>':`<span class="chip ${x.d<0?'bad':x.d<15?'warn':'ok'}">${x.d<0?'Vencida hace '+(-x.d)+' días':'En '+x.d+' días'}</span>`}</td><td>${x.d<15&&!x.prog?`<button class="btn" data-prog="${m.code}|${i}">Programar</button>`:''}</td></tr>`).join('')).join('')}</tbody></table></div></div>`;wireProg(v)}
@@ -1382,6 +1463,14 @@ function vLater(v){const r=S.route;const d={personas:['Personas y EPP',['Entrega
   v.innerHTML=`<div class="page"><div class="ph"><div><h1>${d[0]} <span class="chip neu">Etapa 3</span></h1><div class="sub">Se suma más adelante, sobre los mismos datos.</div></div></div><div class="card cb" style="max-width:640px"><b>Qué va a tener</b><ul class="muted">${d[1].map(x=>`<li>${x}</li>`).join('')}</ul></div></div>`}
 function vConfig(v){v.innerHTML=`<div class="page"><div class="ph"><div><h1>Configuración</h1><div class="sub">Lo que hace que el sistema escale a otras unidades y empresas.</div></div></div>
  <div class="grid g3">${[['Tipos de máquina','10 tipos · ventana de verificación por tipo'],['Servicios y contratos','Lo que pide cada contrato · firmantes habituales'],['Usuarios y roles','Supervisores, Jefes, Depósito, Compras, Gerencia'],['Ubicaciones','Depósitos, camionetas, cuadrillas, puntos de guarda'],['Unidades y zonas','Limpieza, Espacios Verdes, Mantenimiento, Refrigeración'],['Integraciones','Intercambio de archivos con el sistema de gestión actual']].map(x=>`<div class="card cb"><b>${x[0]}</b><div class="small muted">${x[1]}</div></div>`).join('')}</div></div>`}
+
+function prevBlock(m){const P=PLAN[m.type];
+  if(!P)return `<div class="card"><div class="ch"><h3>Mantenimiento preventivo</h3><span class="chip info">Etapa 3</span></div><div class="cb muted">Sin service programado para este tipo de máquina: se reemplaza cuando falla.</div></div>`;
+  const p=PV.find(x=>x.code===m.code&&x.step<3);const last=m.hist.filter(e=>e.prev).sort((a,b)=>b.d-a.d)[0];const st=p?pvState(p):null;
+  return `<div class="card"><div class="ch"><h3>Mantenimiento preventivo</h3><span class="chip info">Etapa 3</span><div class="r"><span class="tag neu">Clase ${P.clase}</span></div></div>
+   <div class="row"><div><div class="t">${P.serv}</div><div class="m">${P.cada}${m.horas?' · horas de uso: '+m.horas.toLocaleString('es-AR')+' h':''}</div></div><div class="r">${p?`<span class="chip ${st.t}">${st.l}</span>`:'<span class="chip ok">Al día</span>'}</div></div>
+   <div class="row"><div><div class="t">Último service</div><div class="m">${last?fmtDL(last.d)+' · '+last.det:'Sin registro en el sistema'}</div></div></div>
+   <div class="row"><div><div class="t">Cuidado diario</div><div class="m">${P.diario.join(' · ')}</div></div></div></div>`}
 
 /* =========================================================
    TABLEROS POR ROL, VALOR GENERADO, ASISTENTE IA, ANTES Y DESPUÉS
@@ -1685,7 +1774,8 @@ function renderTablet(v){
   const rot=G.filter(g=>g.kind==='rotura'&&!g.closed);
   const alta=G.filter(g=>g.kind==='alta'&&!g.closed);
   const recv=ML().filter(m=>m.loc.k==='transito'&&m.loc.id==='CAR');
-  const tabs=[['despachar','Para despachar',desp.length],['recibir','Por recibir',recv.length],['taller','Roturas y taller',rot.length],['alta','Alta y etiqueta',alta.length]];
+  const pvs=PV.filter(p=>p.step===1||p.step===2);
+  const tabs=[['despachar','Para despachar',desp.length],['recibir','Por recibir',recv.length],['taller','Roturas y taller',rot.length],['prev','Preventivos',pvs.length],['alta','Alta y etiqueta',alta.length]];
   let list='',det='';
   if(T.tab==='despachar'){
     list=desp.map(g=>`<div class="tcard ${T.sel===g.id?'on':''}" data-tsel="${g.id}"><div class="small muted">Para despachar</div><div class="t">${L[g.svc].c} · ${TN(g.type)}</div><div class="m">Autorizó Jorge Medina ${relAge(g.authAt)}${g.moveFrom?' · sale desde '+L[g.moveFrom].c:''}</div></div>`).join('')||'<div class="muted" style="padding:10px">No hay salidas autorizadas. Cuando el Jefe de Supervisión autorice un pedido, aparece acá.</div>';
@@ -1719,6 +1809,20 @@ function renderTablet(v){
        <div class="small muted" style="margin-bottom:6px">Dónde está ahora: <b style="color:var(--ink)">${esc(whereN(m))}</b></div>${act}</div>`;}
     else det=rot.length?'<div class="tdetail muted">Elegí una rotura de la lista.</div>':'';
   }
+  else if(T.tab==='prev'){
+    list=`<div class="small muted" style="margin:0 2px 8px">Visitas agrupadas por lugar · planes de ejemplo</div>`+(pvs.map(p=>{const m=M[p.code];const st=pvState(p);return `<div class="tcard ${T.sel===p.id?'on':''}" data-tsel="${p.id}"><div class="small muted">${p.task} · ${p.cada.toLowerCase()}</div><div class="t">${p.code} · ${TN(m.type)}</div><div class="m">${esc(whereShort(m))} · ${st.l}${p.step===2?' · en ejecución':''}</div></div>`}).join('')||'<div class="muted" style="padding:10px">No hay preventivos asignados. Se asignan desde la web, en Preventivo.</div>');
+    const p=pvs.find(x=>x.id===T.sel);
+    if(p){const m=M[p.code];const P=PLAN[m.type];const nOk=P.pts.filter((_,i)=>p.chk[i]).length;const all=nOk===P.pts.length;
+      det=`<div class="tdetail"><div class="small muted">Preventivo · ${p.id} · ${esc(whereShort(m))}</div><h3>${p.code} · ${TN(m.type)}</h3><div class="m muted">${m.marca} · serie ${m.serie}</div>
+       <div class="steps" style="margin:16px 0">${KIND.preventivo.steps.map((s,i)=>`<div class="step ${i<p.step?'is-done':i===p.step?'is-now':''}"><b>${i<p.step?CHK:i+1}</b>${s}</div>`).join('')}</div>
+       ${p.step===1?`<div class="lbl">Escaneá la máquina para empezar</div><div class="small muted" style="margin-bottom:8px">El escaneo confirma que es esta unidad y dónde está.</div><button class="tbtn p" id="pvstart" style="width:100%">Escanear ${p.code} y empezar</button>`
+       :`<div class="lbl" style="display:flex">${p.task}<span class="muted" style="margin-left:auto;font-weight:400">${nOk} de ${P.pts.length}</span></div>
+         ${P.pts.map((x,i)=>`<div class="pvrow ${p.chk[i]==='obs'?'obs':''}"><span class="pvn ${p.chk[i]?'on':''}">${i+1}</span><span class="pvt">${x}${p.chk[i]==='obs'?'<small>Con observación: queda en la historia</small>':''}</span><button class="pvb ${p.chk[i]==='ok'?'on':''}" data-pvok="${i}">Bien</button><button class="pvb o ${p.chk[i]==='obs'?'on':''}" data-pvobs="${i}">Observación</button></div>`).join('')}
+         ${m.horas?`<div style="display:flex;gap:12px;align-items:center;margin:12px 0 4px"><label class="lbl" style="margin:0">Horas de uso</label><input class="inp" id="pvh" style="width:130px;min-height:44px" inputmode="numeric" value="${m.horas+7}"><span class="small muted">última lectura: ${m.horas.toLocaleString('es-AR')} h</span></div>`:''}
+         <div style="display:flex;gap:10px;margin-top:10px"><button class="tbtn s" id="pvfail" style="flex:1">Encontré una falla</button><button class="tbtn p" id="pvclose" style="flex:1.6" ${all?'':'disabled'}>Cerrar preventivo</button></div>
+         <div class="formhint">${all?'Queda en la historia de la máquina y se programa el próximo.':'Marcá los '+P.pts.length+' puntos para cerrar.'}</div>`}</div>`;}
+    else det=pvs.length?'<div class="tdetail muted">Elegí un preventivo de la lista.</div>':'';
+  }
   else if(T.tab==='alta'){list=alta.map(g=>`<div class="tcard ${T.sel===g.id?'on':''}" data-tsel="${g.id}"><div class="t">Desmalezadora nueva · ${L[g.svc].c}</div><div class="m">Encontrada por ${PN(g.by)} en el censo · etiqueta pegada · faltan marca y serie</div></div>`).join('')||'<div class="muted" style="padding:10px">Las máquinas encontradas sin etiqueta en un censo aparecen acá para completar sus datos.</div>';
     const g=alta.find(x=>x.id===T.sel);if(g)det=`<div class="tdetail"><h3>Completar alta</h3><input class="inp" placeholder="Marca"><input class="inp" placeholder="N.º de serie" style="margin-top:8px"><button class="tbtn p" id="talta" style="width:100%;margin-top:10px">Guardar</button></div>`;}
   v.innerHTML=`<div class="stage"><div class="tablet"><div class="tscr">
@@ -1733,6 +1837,16 @@ function wireTablet(v){
   on('[data-tsel]',b=>{T.sel=b.dataset.tsel;T.f={};render()});
   on('[data-tcode]',b=>{f.code=b.dataset.tcode;render()});
   v.querySelectorAll('[data-tchk]').forEach(c=>c.onchange=()=>{f['c'+c.dataset.tchk]=c.checked;render()});
+  const pv=PV.find(x=>x.id===T.sel);
+  if(pv){const m=M[pv.code],P=PLAN[m.type];
+    const ps=$('#pvstart');if(ps)ps.onclick=()=>{pv.step=2;m.ver={d:tick(2),who:'diego',how:'en el preventivo'};render();toast(pv.code+' leída. Empezó el preventivo.')};
+    on('[data-pvok]',b=>{pv.chk[b.dataset.pvok]='ok';render()});on('[data-pvobs]',b=>{pv.chk[b.dataset.pvobs]='obs';render()});
+    const fin=(falla)=>{const obs=P.pts.filter((_,i)=>pv.chk[i]==='obs');const hi=$('#pvh');if(hi&&+hi.value>0)m.horas=+hi.value;const tt=tick(40);pv.step=3;
+      H(m,tt,pv.task+' hecho','Preventivo '+pv.id+' · Diego Sosa · '+P.pts.length+' puntos'+(obs.length?' · observación: '+obs.join(', ').toLowerCase():'')+(m.horas?' · '+m.horas.toLocaleString('es-AR')+' h':''),'',{prev:true});
+      if(falla){newG({kind:'rotura',code:m.code,svc:m.loc.id,by:'diego',prob:'Falla encontrada en el preventivo '+pv.id,fs:false,step:1,owner:'deposito',created:tt})}
+      T.sel=null;T.f={};render();toast(falla?'Preventivo cerrado y rotura abierta para '+m.code+'. La ves en Roturas y taller.':'Preventivo cerrado. Queda en la historia de '+m.code+' y se programa el próximo '+P.cada.toLowerCase()+'.')};
+    const pc=$('#pvclose');if(pc)pc.onclick=()=>fin(false);const pf=$('#pvfail');if(pf)pf.onclick=()=>fin(true);
+  }
   const g=G.find(x=>x.id===T.sel);
   const d=$('#tdesp');if(d)d.onclick=()=>{const m=M[f.code];const t=tick(6);const from=m.loc.id;m.loc={k:'transito',id:g.svc,from:from};m.ver={d:t,who:'diego',how:'escaneo al despachar'};m.transitSince=t;
     H(m,g.created,'Pedido de máquina','Lo pidió '+PN(g.by)+'. '+(g.why||'')+'. Pedido '+g.id,'n');H(m,g.authAt||g.created,'Salida autorizada','Autorizó Jorge Medina, Jefe de Supervisión','n');H(m,t,'Despachada desde '+L[from].c+' hacia '+L[g.svc].c,'Escaneo del QR por Diego Sosa. Control de salida: funciona, batería, cepillo. Pedido '+g.id);
@@ -1775,6 +1889,8 @@ const REC=[
    steps:['App: subí la <b>lavandina x 5 L</b> a 14 → aparece el tope → bajala a 12 → <b>Enviar</b>.','Cambiá a <b>Supervisora General</b> → Pendientes → <b>Aprobar</b>.','Cambiá a <b>Compras</b> → Pedidos de insumos → abrí <b>Lavandina x 5 L</b>: 3 códigos unificados.']},
   {n:5,t:'Cierre de contrato',d:'Jefe de Supervisión · 1 minuto · si queda tiempo',start:()=>{setProfile('jefe');go('cierre/FIN')},
    steps:['Mirá lo que el sistema dice que hay en el Servicio de ejemplo.','<b>Pedir censo de cierre</b>.','Elegí el destino de cada máquina.','<b>Ver avance del retiro</b>.']},
+  {n:6,t:'Mantenimiento preventivo',d:'Jefe → Taller (tablet) → Gerencia · 1:30 · etapa 3',start:()=>{S.pvtab='agenda';setProfile('jefe');go('preventivo')},
+   steps:['En <b>Preventivo</b>: la agenda agrupa los trabajos por lugar. En <b>LHB-0001</b> tocá <b>Asignar al Taller</b>. Mirá también <b>Planes por tipo</b>.','Cambiá a <b>Depósito</b> (tablet) → <b>Preventivos</b> → <b>LHB-0007</b> → <b>Escanear y empezar</b>.','Marcá los puntos de la lista: en <b>Labio de secado</b> tocá <b>Observación</b>; el resto, <b>Bien</b>.','<b>Cerrar preventivo</b>.','Cambiá a <b>Gerencia</b> → Máquinas → <b>LHB-0007</b>: el service quedó en la historia y en Mantenimiento preventivo.']},
 ];
 function setProfile(p){S.profile=p;$('#prof').value=p;if(p==='deposito'){S.t={tab:'despachar',sel:null,f:{}}}$('#toast').classList.remove('on');render()}
 function renderCoach(){const c=$('#coach');if(S.rec==null){c.classList.add('hidden');return}const r=REC[S.rec];const i=S.recStep;
@@ -1784,7 +1900,7 @@ function renderCoach(){const c=$('#coach');if(S.rec==null){c.classList.add('hidd
 function renderGuide(){
   const g=$('#guide');g.classList.toggle('hidden',!S.guideOpen);if(!S.guideOpen)return;
   g.innerHTML=`<div class="gh"><h3>Guía de la demo</h3><button class="btn g" style="margin-left:auto" id="gx">Cerrar</button></div>
-   <div style="padding:10px 16px;font-size:12.5px;color:var(--ink2);border-bottom:1px solid #ECEEED">Seis recorridos de punta a punta. Cada uno cambia de perfil en vivo y muestra que al siguiente rol le llegó el pendiente. <button class="link" id="greset">Reiniciar la demo</button></div>
+   <div style="padding:10px 16px;font-size:12.5px;color:var(--ink2);border-bottom:1px solid #ECEEED">Siete recorridos de punta a punta. Cada uno cambia de perfil en vivo y muestra que al siguiente rol le llegó el pendiente. <button class="link" id="greset">Reiniciar la demo</button></div>
    ${REC.map(r=>`<div class="rec ${S.recDone[r.n]?'is-done':''}"><div class="top"><span class="n">${S.recDone[r.n]?'✓':r.n}</span><div><div class="t">${r.t}</div><div class="d">${r.d}</div></div><button class="btn p" style="margin-left:auto" data-rec="${r.n}">Empezar</button></div><ol>${r.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>`).join('')}`;
   $('#gx').onclick=()=>{S.guideOpen=false;renderGuide()};
   $('#greset').onclick=()=>location.reload();
@@ -1801,6 +1917,7 @@ function init(){
   $('#gbtn').onclick=()=>{S.guideOpen=!S.guideOpen;renderGuide()};
   $('#bx').onclick=()=>{S.bannerOff=true;$('#banner').classList.add('hidden');$('#dreal').setAttribute('aria-expanded','false')};
   S.bannerOff=true;$('#dreal').onclick=()=>{S.bannerOff=!S.bannerOff;$('#banner').classList.toggle('hidden',S.bannerOff);$('#dreal').setAttribute('aria-expanded',String(!S.bannerOff))};
+  $('#dreset').onclick=()=>{history.replaceState(null,'',location.pathname);location.reload()};
   document.querySelectorAll('[data-proj]').forEach(b=>b.onclick=()=>{if(!PROF[S.profile].web)setProfile('gerente');go(b.dataset.proj)});
   S.route=location.hash.slice(1)||'centro';
   render();
